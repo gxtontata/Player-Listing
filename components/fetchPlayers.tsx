@@ -17,6 +17,7 @@ interface Player {
     discord?: string;
     steam?: string;
     identifier?: string;
+    score?: number;
 }
 
 interface MinecraftTps {
@@ -92,7 +93,7 @@ const fetchPlayers: React.FC = () => {
 
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
     const DEFAULT_API_URL = 'https://api.euphoriadevelopment.uk/gameapi';
-    const DEFAULT_CRAFATAR_URL = 'https://nitrocraft.uk';
+    const DEFAULT_CRAFATAR_URL = 'https://crafatar.com';
     const [backendApiUrl, setBackendApiUrl] = useState<string>(DEFAULT_API_URL);
     const [avatarApiUrl, setAvatarApiUrl] = useState<string>(DEFAULT_CRAFATAR_URL);
     const serverUuid = uuid;
@@ -1067,6 +1068,25 @@ const fetchPlayers: React.FC = () => {
                             setPlayers([]);
                             setError('Server is offline.');
                         }
+                    } else if (selectedGame === 'samp') {
+                        // For SA-MP servers
+                        if (data.success && data.data) {
+                            const gameData = data.data;
+                            applyPlayerCounts(gameData.numplayers, gameData.maxplayers);
+                            setPing(gameData.ping);
+
+                            setPlayers(gameData.players.map((player: any) => ({
+                                name: player.name,
+                                uuid: player.name,
+                                ping: typeof player.ping === 'number' ? player.ping : null,
+                                score: typeof player.score === 'number' ? player.score : undefined,
+                            })));
+                        } else {
+                            applyPlayerCounts(0, 0);
+                            setPing(null);
+                            setPlayers([]);
+                            setError('Server is offline.');
+                        }
                     } else {
                         // For other games
                         if (data.success && data.data) {
@@ -1255,6 +1275,25 @@ const fetchPlayers: React.FC = () => {
                                 name: playerName,
                                 uuid: playerName,
                                 ping: null,
+                            })));
+                        } else {
+                            applyPlayerCounts(0, 0);
+                            setPing(null);
+                            setPlayers([]);
+                            setError('Server is offline.');
+                        }
+                    } else if (selectedGame === 'samp') {
+                        // For SA-MP servers
+                        if (data.success && data.data) {
+                            const gameData = data.data;
+                            applyPlayerCounts(gameData.numplayers, gameData.maxplayers);
+                            setPing(gameData.ping);
+
+                            setPlayers(gameData.players.map((player: any) => ({
+                                name: player.name,
+                                uuid: player.name,
+                                ping: typeof player.ping === 'number' ? player.ping : null,
+                                score: typeof player.score === 'number' ? player.score : undefined,
                             })));
                         } else {
                             applyPlayerCounts(0, 0);
@@ -1655,6 +1694,11 @@ const fetchPlayers: React.FC = () => {
                                                     >
                                                         {copiedUUIDs[`${player.name}_identifier`] ? "Copied!" : "ID"}
                                                     </button>
+                                                )}
+                                                {selectedGame === 'samp' && player.score !== undefined && (
+                                                    <span className="text-sm bg-yellow-500 text-white px-2 py-1 rounded">
+                                                        Score: {player.score}
+                                                    </span>
                                                 )}
                                                 {selectedGame === 'minecraft' ? (
                                                     <button
